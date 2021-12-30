@@ -4,10 +4,11 @@
 import cors from "cors";
 import express, { json } from 'express';
 import morgan from 'morgan';
-//import routes from './routes.js';
-import routes from './routes/UserRoutes';
-import routes from './routes/WorkoutRoutes';
-import routes from './routes/ExerciseRoutes';
+import routes from './routes.js';
+// import routes from './routes/UserRoutes';
+// import routes from './routes/WorkoutRoutes';
+// import routes from './routes/ExerciseRoutes';
+// import routes from './routes/SetsRepsRoutes';
 import { sequelize } from "./models";
 
 // variable to enable global error logging

@@ -10,12 +10,12 @@ export default (sequelize) => {
             autoIncrement: true,
         },
 
-        SetNumber: {
+        setNumber: {
             type: DataTypes.INTEGER,
             allowNull: false,
         },
 
-        Repetitions: {
+        repetitions: {
             type: DataTypes.INTEGER,
             allowNull: false,
         },

@@ -2,13 +2,13 @@
 
 import { Router } from "express";
 import { asyncHandler } from "./middleware/asyncHandler";
-import { User, Workout, Exercise } from './models';
+import { User, Workout, Exercise, SetsReps } from './models';
 import { authenticateUser } from "./middleware/authUser";
 import { genSalt, hash } from "bcrypt";
 const router = Router();
 
 //GET route to display exercise data from database
-router.get("workout/:workoutId/exercises", authenticateUser, asyncHandler(async(req, res) => {
+router.get("/workout/:workoutId/exercises", authenticateUser, asyncHandler(async(req, res) => {
     //Equals Workout Object
     const workout = Workout.findByPk(req.params.workoutId);
     try {
@@ -23,7 +23,7 @@ router.get("workout/:workoutId/exercises", authenticateUser, asyncHandler(async(
             order: [['createdAt', 'DESC']],
             include: [
                 {
-                    model: Exercise,
+                    model: Workout,
                     as: "workout-exercise",
                 }
             ]
@@ -62,6 +62,10 @@ router.get("workout/:workoutId/exercise/:id", authenticateUser, asyncHandler(asy
                 {
                     model: Workout,
                     as: "workout-exercise",
+                },
+                {
+                    model: SetsReps,
+                    as: "exercise-sets-reps"
                 }
             ]}
     );
@@ -86,7 +90,7 @@ router.get("workout/:workoutId/exercise/:id", authenticateUser, asyncHandler(asy
 }));
 
 //POST route to create a new exercise
-router.post("/exercise", authenticateUser, asyncHandler(async(req, res) => {
+router.post("/workout/:workoutId/exercise", authenticateUser, asyncHandler(async(req, res) => {
     try{
         //Title is the parameter that CAN'T be null
         if(req.body.title.length > 0){
@@ -140,10 +144,29 @@ router.put("workout/:workoutId/exercise/:id", authenticateUser, asyncHandler(asy
 //Delete route to destroy a specific exercise
 router.delete("/workout/:workoutId/exercise/:id", authenticateUser, async(req, res)=>{
     try{
+        //Finds workout based off of :workoutId in path
         const workout = await Workout.findByPk(req.params.workoutId);
+        //Finds exercise based off of :id in path
         const exercise = await Exercise.findByPk(req.params.id);
-        //Checks to see if current user possesses the course
+        //Checks to see if exercise is a child of workout
         if(workout.id === exercise.workoutId){
+            //Finds all sets that are a child of the parent
+            const sets = await SetsReps.findAll({
+                //Where parent's id equals child's exerciseId
+                where: {
+                    exerciseId: exercise.id
+                },
+                order: [['createdAt', 'DESC']],
+            });
+            //Loops through children of exercise
+            await sets.forEach(set => {
+                //Conditional for if set's exerciseId equals parent's id in loop
+                if(set.exerciseId === exercise.id){
+                    //Deletes set first
+                    await set.destroy();
+                }
+            })
+            //Deletes exercise last
             await exercise.destroy();
             console.log("Exercise Successfully Deleted");
             res.status(204).end();

@@ -24,7 +24,7 @@ module.exports = (sequelize) => {
                 fieldName: "workoutId",
                 allowNull: false,
             },
-        })
+        });
     };
     //Data association with SetsReps table
     Exercise.associate = (models) => {

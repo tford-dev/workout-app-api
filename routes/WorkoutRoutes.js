@@ -2,7 +2,7 @@
 
 import { Router } from "express";
 import { asyncHandler } from "./middleware/asyncHandler";
-import { User, Workout, Exercise } from './models';
+import { User, Workout, Exercise, SetsReps } from './models';
 import { authenticateUser } from "./middleware/authUser";
 import { genSalt, hash } from "bcrypt";
 const router = Router();
@@ -153,14 +153,49 @@ router.put("/workout/:id", authenticateUser, asyncHandler(async(req, res) => {
     }
 }));
 
-//Delete route to destroy a specific workout
+//Delete route to destroy a specific workout and it's children
 router.delete("/workout/:id", authenticateUser, async(req, res)=>{
+    //Current authenticated user
     const user = req.currentUser;
     try{
+        //Finds current workout based off of :id in path
         const workout = await Workout.findByPk(req.params.id);
-        //Checks to see if current user possesses the course
+        //Find all Exercise-model children of workout
+        const exercises = Exercise.findAll({
+            //Where exercise workoutId === workout.id
+            where: {
+                workoutId: workout.id
+            },
+            order: [['createdAt', 'DESC']],
+        }); 
+        //Conditional only works if user id is equal to workout userId
         if(user.id === workout.userId){
-            await workout.destroy();
+            //Loops through exercise children of workout
+            await exercises.forEach(exercise => {
+                //If exercise child's workoutId === workout.id
+                if(exercise.workoutId === workout.id){
+                    //Finds all setsReps within exercise child
+                    const sets = await SetsReps.findAll({
+                        //Where parent's id equals child's exerciseId
+                        where: {
+                            exerciseId: exercise.id
+                        },
+                        order: [['createdAt', 'DESC']],
+                    });
+                    //Loops through children of exercise
+                    await sets.forEach(set => {
+                        //Conditional for if set's exerciseId equals parent's id in loop
+                        if(set.exerciseId === exercise.id){
+                            //Deletes set first
+                            await set.destroy();
+                        }
+                    })
+                    //Deletes exercise second
+                    await exercise.destroy();
+                }
+                //Deletes workout last
+                await workout.destroy();
+            })
             console.log("Workout Successfully Deleted");
             res.status(204).end();
         } else {
