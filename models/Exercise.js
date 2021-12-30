@@ -1,5 +1,4 @@
 import { Model, DataTypes } from "sequelize";
-import bcrypt from "bcrypt";
 
 //Schema for Exercises
 module.exports = (sequelize) => {
@@ -15,17 +14,6 @@ module.exports = (sequelize) => {
             type: DataTypes.STRING,
             allowNull: false
         },
-
-        sets: {
-            type: DataTypes.INTEGER,
-            allowNull: false
-        },
-
-        repetitions: {
-            type: DataTypes.INTEGER,
-            allowNull: false
-        },
-
     }, {sequelize});
 
     //Data association with Workout table
@@ -38,5 +26,15 @@ module.exports = (sequelize) => {
             },
         })
     };
+    //Data association with SetsReps table
+    Exercise.associate = (models) => {
+        Exercise.hasMany = (models.SetsReps, {
+            as: "exercise-sets-reps",
+            foreignKey: {
+                fieldName: "exerciseId",
+                allowNull: false,
+            }
+        })
+    }
     return Exercise;
 };

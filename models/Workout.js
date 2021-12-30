@@ -37,6 +37,7 @@ export default (sequelize) => {
             },
         });
     };
+    //Data association with Exercise table
     Workout.associate = (models) => {
         Workout.hasMany(models.Exercise, {
             as: 'workout-exercise',
