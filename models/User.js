@@ -1,10 +1,10 @@
 "use strict";
-import { Model, DataTypes } from "sequelize";
-import bcrypt from "bcrypt";
+const {Model, DataTypes} = require("sequelize");
+const bcrypt = require("bcrypt");
 
 //Schema for User table
 //Most validation for User data in held within this file
-export default (sequelize) => {
+module.exports = (sequelize) => {
     class User extends Model {}
     User.init({
         id: {

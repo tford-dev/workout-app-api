@@ -1,7 +1,7 @@
-import { Model, DataTypes } from "sequelize";
+const {Model, DataTypes} = require("sequelize");
 
 //Schema for SetsReps table
-export default (sequelize) => {
+module.exports = (sequelize) => {
     class SetsReps extends Model {};
     SetsReps.init({
         id: {

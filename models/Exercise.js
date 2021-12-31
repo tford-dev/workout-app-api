@@ -1,4 +1,4 @@
-import { Model, DataTypes } from "sequelize";
+const {Model, DataTypes} = require("sequelize");
 
 //Schema for Exercises
 module.exports = (sequelize) => {

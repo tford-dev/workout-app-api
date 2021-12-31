@@ -1,7 +1,7 @@
-import { Model, DataTypes } from "sequelize";
+const {Model, DataTypes} = require("sequelize");
 
 //Schema for Workouts table
-export default (sequelize) => {
+module.exports = (sequelize) => {
     class Workout extends Model {};
     Workout.init({
         id: {

@@ -1,11 +1,11 @@
 "use strict";
 
-import { Router } from "express";
-import { asyncHandler } from "./middleware/asyncHandler";
-import { User, Workout, Exercise, SetsReps } from './models';
-import { authenticateUser } from "./middleware/authUser";
-import { genSalt, hash } from "bcrypt";
-const router = Router();
+const express = require("express");
+const {asyncHandler} = require("../middleware/asyncHandler.js");
+const { User, Workout, Exercise, SetsReps } = require('../models');
+const {authenticateUser} = require("../middleware/authUser");
+const bcrypt = require("bcrypt");
+const router = express.Router();
 
 //GET route to display workouts data from database
 router.get("/workouts", authenticateUser, asyncHandler(async(req, res) => {
@@ -52,8 +52,34 @@ router.get("/workouts", authenticateUser, asyncHandler(async(req, res) => {
     }
 }));
 
+//Route to create a new workout
+router.post("/workouts", authenticateUser, asyncHandler(async(req, res) => {
+    try{
+        //Hard code for validation errors
+        if(req.body.title.length > 0 && req.body.description.length > 0){
+            await Workout.create(req.body);
+            //Sets location header to specific workout id
+            res.location(`/workout/${Workout.id}`);
+            res.status(201).end(console.log("New workout successfully created")).end();
+        } else if(req.body.title.length === 0 && req.body.description.length === 0){
+            res.status(400).json({errors: "You must enter a value for title and description."})
+        } else if (req.body.title.length === 0) {
+            res.status(400).json({errors: "You must enter a value for title."}).end();
+        } else if (req.body.description.length === 0) {
+            res.status(400).json({errors: "You must enter a value for description."}).end();
+        }
+    } catch(error){
+        if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
+            const errors = error.errors.map(err => err.message);
+            res.status(400).json({ errors: errors });   
+        } else {
+            throw error;
+        }
+    }
+}));
+
 //GET route to display a specific workout
-router.get("/workout/:id", authenticateUser, asyncHandler(async(req, res) => {
+router.get("/workouts/:id", authenticateUser, asyncHandler(async(req, res) => {
     //Current authenticated user
     const user = req.currentUser;
     try {
@@ -86,34 +112,8 @@ router.get("/workout/:id", authenticateUser, asyncHandler(async(req, res) => {
     }
 }));
 
-//Route to create a new workout
-router.post("/workouts", authenticateUser, asyncHandler(async(req, res) => {
-    try{
-        //Hard code for validation errors
-        if(req.body.title.length > 0 && req.body.description.length > 0){
-            await Workout.create(req.body);
-            //Sets location header to specific workout id
-            res.location(`/workout/${Workout.id}`);
-            res.status(201).end(console.log("New workout successfully created")).end();
-        } else if(req.body.title.length === 0 && req.body.description.length === 0){
-            res.status(400).json({errors: "You must enter a value for title and description."})
-        } else if (req.body.title.length === 0) {
-            res.status(400).json({errors: "You must enter a value for title."}).end();
-        } else if (req.body.description.length === 0) {
-            res.status(400).json({errors: "You must enter a value for description."}).end();
-        }
-    } catch(error){
-        if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
-            const errors = error.errors.map(err => err.message);
-            res.status(400).json({ errors: errors });   
-        } else {
-            throw error;
-        }
-    }
-}));
-
 //PUT route to edit a workout
-router.put("/workout/:id", authenticateUser, asyncHandler(async(req, res) => {
+router.put("/workouts/:id", authenticateUser, asyncHandler(async(req, res) => {
     //Current authenticated user
     const user = req.currentUser;
     try{
@@ -154,7 +154,7 @@ router.put("/workout/:id", authenticateUser, asyncHandler(async(req, res) => {
 }));
 
 //Delete route to destroy a specific workout and it's children
-router.delete("/workout/:id", authenticateUser, async(req, res)=>{
+router.delete("/workouts/:id", authenticateUser, async(req, res)=>{
     //Current authenticated user
     const user = req.currentUser;
     try{
@@ -175,7 +175,7 @@ router.delete("/workout/:id", authenticateUser, async(req, res)=>{
                 //If exercise child's workoutId === workout.id
                 if(exercise.workoutId === workout.id){
                     //Finds all setsReps within exercise child
-                    const sets = await SetsReps.findAll({
+                    const sets = SetsReps.findAll({
                         //Where parent's id equals child's exerciseId
                         where: {
                             exerciseId: exercise.id
@@ -183,18 +183,18 @@ router.delete("/workout/:id", authenticateUser, async(req, res)=>{
                         order: [['createdAt', 'DESC']],
                     });
                     //Loops through children of exercise
-                    await sets.forEach(set => {
+                    sets.forEach(set => {
                         //Conditional for if set's exerciseId equals parent's id in loop
                         if(set.exerciseId === exercise.id){
                             //Deletes set first
-                            await set.destroy();
+                            set.destroy();
                         }
                     })
                     //Deletes exercise second
-                    await exercise.destroy();
+                    exercise.destroy();
                 }
                 //Deletes workout last
-                await workout.destroy();
+                workout.destroy();
             })
             console.log("Workout Successfully Deleted");
             res.status(204).end();
@@ -206,4 +206,4 @@ router.delete("/workout/:id", authenticateUser, async(req, res)=>{
     } 
 });
 
-export default router;
+module.exports = router;

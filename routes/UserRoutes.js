@@ -1,11 +1,11 @@
 "use strict";
 
-import { Router } from "express";
-import { asyncHandler } from "./middleware/asyncHandler";
-import { User, Workout, Exercise, SetsReps } from './models';
-import { authenticateUser } from "./middleware/authUser";
-import { genSalt, hash } from "bcrypt";
-const router = Router();
+const express = require("express");
+const {asyncHandler} = require("../middleware/asyncHandler.js");
+const { User, Workout, Exercise, SetsReps } = require('../models');
+const {authenticateUser} = require("../middleware/authUser");
+const bcrypt = require("bcrypt");
+const router = express.Router();
 
 //GET route for user authentication
 router.get('/users', authenticateUser, asyncHandler(async (req, res) => {
@@ -89,6 +89,4 @@ router.post('/users', asyncHandler(async (req, res) => {
     }
 }));
 
-
-
-export default router;
+module.exports = router;

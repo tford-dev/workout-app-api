@@ -1,14 +1,14 @@
 {
   "development": {
     "dialect": "sqlite",
-    "storage": "workout-app.db"
+    "storage": "workout_app.db"
   },
   "test": {
     "dialect": "sqlite",
-    "storage": "workout-app.db"
+    "storage": "workout_app.db"
   },
   "production": {
     "dialect": "sqlite",
-    "storage": "workout-app.db"
+    "storage": "workout_app.db"
   }
 }

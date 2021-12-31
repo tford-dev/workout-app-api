@@ -1,15 +1,16 @@
 'use strict';
 
 // load modules
-import cors from "cors";
-import express, { json } from 'express';
-import morgan from 'morgan';
-import routes from './routes.js';
-// import routes from './routes/UserRoutes';
-// import routes from './routes/WorkoutRoutes';
-// import routes from './routes/ExerciseRoutes';
-// import routes from './routes/SetsRepsRoutes';
-import { sequelize } from "./models";
+const cors = require("cors");
+const express = require('express');
+const morgan = require('morgan');
+//import routes from './routes';
+const userRouter = require("./routes/UserRoutes.js");
+const workoutRouter = require("./routes/WorkoutRoutes.js");
+const exerciseRouter = require("./routes/ExerciseRoutes.js");
+const setsRouter = require("./routes/SetsRepsRoutes.js");
+const sequelize = require("./models");
+console.log(sequelize);
 
 // variable to enable global error logging
 const enableGlobalErrorLogging = process.env.ENABLE_GLOBAL_ERROR_LOGGING === 'true';
@@ -20,7 +21,7 @@ const app = express();
 // Enable All CORS Requests
 app.use(cors());
 
-app.use(json());
+app.use(express.json());
 
 // setup morgan which gives us http request logging
 app.use(morgan('dev'));
@@ -28,11 +29,15 @@ app.use(morgan('dev'));
 // setup a friendly greeting for the root route
 app.get('/', (req, res) => {
   res.json({
-    message: 'message-app API By @tford-dev.',
+    message: 'workout-app API By @tford-dev.',
   });
 });
 
-app.use('/api', routes);
+//app.use('/api', "./routes");
+app.use('/users', userRouter);
+app.use('/workouts', workoutRouter);
+app.use('/exercises', exerciseRouter);
+app.use('/sets', setsRouter);
 
 // send 404 if no other route matched
 app.use((req, res) => {

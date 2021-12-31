@@ -1,14 +1,14 @@
 "use strict";
 
-import { Router } from "express";
-import { asyncHandler } from "./middleware/asyncHandler";
-import { User, Workout, Exercise, SetsReps } from './models';
-import { authenticateUser } from "./middleware/authUser";
-import { genSalt, hash } from "bcrypt";
-const router = Router();
+const express = require("express");
+const {asyncHandler} = require("../middleware/asyncHandler.js");
+const { User, Workout, Exercise, SetsReps } = require('../models');
+const {authenticateUser} = require("../middleware/authUser");
+const bcrypt = require("bcrypt");
+const router = express.Router();
 
 //GET route to display exercise data from database
-router.get("/workout/:workoutId/exercises", authenticateUser, asyncHandler(async(req, res) => {
+router.get("/workouts/:workoutId/exercises", authenticateUser, asyncHandler(async(req, res) => {
     //Equals Workout Object
     const workout = Workout.findByPk(req.params.workoutId);
     try {
@@ -51,8 +51,29 @@ router.get("/workout/:workoutId/exercises", authenticateUser, asyncHandler(async
     }
 }));
 
+//POST route to create a new exercise
+router.post("/workouts/:workoutId/exercises", authenticateUser, asyncHandler(async(req, res) => {
+    try{
+        //Title is the parameter that CAN'T be null
+        if(req.body.title.length > 0){
+            await Exercise.create(req.body);
+            res.status(201).end(console.log("New exercise successfully created!")).end();
+        //Title for exercise cannot be null
+        } else if(req.body.title.length === 0){
+            res.status(400).json({errors: "You must enter a value for title."})
+        }
+    } catch(error){
+        if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
+            const errors = error.errors.map(err => err.message);
+            res.status(400).json({ errors: errors });   
+        } else {
+            throw error;
+        }
+    }
+}));
+
 //GET route to display a specific exercise
-router.get("workout/:workoutId/exercise/:id", authenticateUser, asyncHandler(async(req, res) => {
+router.get("workouts/:workoutId/exercises/:id", authenticateUser, asyncHandler(async(req, res) => {
     //Current workout
     const workout = Workout.findByPk(req.params.workoutId);
     try {
@@ -89,29 +110,8 @@ router.get("workout/:workoutId/exercise/:id", authenticateUser, asyncHandler(asy
     }
 }));
 
-//POST route to create a new exercise
-router.post("/workout/:workoutId/exercise", authenticateUser, asyncHandler(async(req, res) => {
-    try{
-        //Title is the parameter that CAN'T be null
-        if(req.body.title.length > 0){
-            await Exercise.create(req.body);
-            res.status(201).end(console.log("New exercise successfully created!")).end();
-        //Title for exercise cannot be null
-        } else if(req.body.title.length === 0){
-            res.status(400).json({errors: "You must enter a value for title."})
-        }
-    } catch(error){
-        if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
-            const errors = error.errors.map(err => err.message);
-            res.status(400).json({ errors: errors });   
-        } else {
-            throw error;
-        }
-    }
-}));
-
 //PUT route to edit an exercise
-router.put("workout/:workoutId/exercise/:id", authenticateUser, asyncHandler(async(req, res) => {
+router.put("workouts/:workoutId/exercises/:id", authenticateUser, asyncHandler(async(req, res) => {
     const exercise = await Exercise.findByPk(req.params.id);
     const workout = await Workout.findByPk(req.params.workoutId);
     try{
@@ -142,7 +142,7 @@ router.put("workout/:workoutId/exercise/:id", authenticateUser, asyncHandler(asy
 }));
 
 //Delete route to destroy a specific exercise
-router.delete("/workout/:workoutId/exercise/:id", authenticateUser, async(req, res)=>{
+router.delete("/workouts/:workoutId/exercises/:id", authenticateUser, async(req, res)=>{
     try{
         //Finds workout based off of :workoutId in path
         const workout = await Workout.findByPk(req.params.workoutId);
@@ -163,7 +163,7 @@ router.delete("/workout/:workoutId/exercise/:id", authenticateUser, async(req, r
                 //Conditional for if set's exerciseId equals parent's id in loop
                 if(set.exerciseId === exercise.id){
                     //Deletes set first
-                    await set.destroy();
+                    set.destroy();
                 }
             })
             //Deletes exercise last
@@ -178,4 +178,4 @@ router.delete("/workout/:workoutId/exercise/:id", authenticateUser, async(req, r
     } 
 });
 
-export default router;
+module.exports = router;

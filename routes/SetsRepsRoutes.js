@@ -1,14 +1,14 @@
 "use strict";
 
-import { Router } from "express";
-import { asyncHandler } from "./middleware/asyncHandler";
-import { User, Workout, Exercise, SetsReps } from './models';
-import { authenticateUser } from "./middleware/authUser";
-import { genSalt, hash } from "bcrypt";
-const router = Router();
+const express = require("express");
+const {asyncHandler} = require("../middleware/asyncHandler.js");
+const { User, Workout, Exercise, SetsReps } = require('../models');
+const {authenticateUser} = require("../middleware/authUser");
+const bcrypt = require("bcrypt");
+const router = express.Router();
 
 //GET route to display setsReps data from database
-router.get("/workout/:workoutId/exercise/:exerciseId/sets", authenticateUser, asyncHandler(async(req, res) => {
+router.get("/workouts/:workoutId/exercises/:exerciseId/sets", authenticateUser, asyncHandler(async(req, res) => {
     //Equals Exercise Object
     const exercise = Exercise.findByPk(req.params.exerciseId);
     try {
@@ -49,8 +49,32 @@ router.get("/workout/:workoutId/exercise/:exerciseId/sets", authenticateUser, as
     }
 }));
 
+//POST route to create a new set
+router.post("/workouts/:workoutId/exercises/:exerciseId/sets", authenticateUser, asyncHandler(async(req, res) => {
+    try{
+        //set number and rep number can't be null
+        if(req.body.setNumber > 0 && req.body.repetitions > 0){
+            await SetsReps.create(req.body);
+            res.status(201).end(console.log("New set successfully logged!")).end();
+        //Set number must be 1 or more
+        } else if(req.body.setNumber < 1){
+            res.status(400).json({errors: "You must enter a value for set."});
+        //Repetitions must be 1 or more
+        } else if(req.body.repetitions < 1){
+            res.status(400).json({errors: "You must enter a value for repetitions"});
+        }
+    } catch(error){
+        if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
+            const errors = error.errors.map(err => err.message);
+            res.status(400).json({ errors: errors });   
+        } else {
+            throw error;
+        }
+    }
+}));
+
 //GET route to display a specific set
-router.get("workout/:workoutId/exercise/:exerciseId/set/:id", authenticateUser, asyncHandler(async(req, res) => {
+router.get("workouts/:workoutId/exercises/:exerciseId/sets/:id", authenticateUser, asyncHandler(async(req, res) => {
     //Current exercise
     const exercise = Exercise.findByPk(req.params.exerciseId);
     try {
@@ -81,32 +105,8 @@ router.get("workout/:workoutId/exercise/:exerciseId/set/:id", authenticateUser, 
     }
 }));
 
-//POST route to create a new set
-router.post("/workout/:workoutId/exercise/:exerciseId/set", authenticateUser, asyncHandler(async(req, res) => {
-    try{
-        //set number and rep number can't be null
-        if(req.body.setNumber > 0 && req.body.repetitions > 0){
-            await SetsReps.create(req.body);
-            res.status(201).end(console.log("New set successfully logged!")).end();
-        //Set number must be 1 or more
-        } else if(req.body.setNumber < 1){
-            res.status(400).json({errors: "You must enter a value for set."});
-        //Repetitions must be 1 or more
-        } else if(req.body.repetitions < 1){
-            res.status(400).json({errors: "You must enter a value for repetitions"});
-        }
-    } catch(error){
-        if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
-            const errors = error.errors.map(err => err.message);
-            res.status(400).json({ errors: errors });   
-        } else {
-            throw error;
-        }
-    }
-}));
-
 //PUT route to edit a set
-router.put("workout/:workoutId/exercise/:exerciseId/set/:id", authenticateUser, asyncHandler(async(req, res) => {
+router.put("workouts/:workoutId/exercises/:exerciseId/sets/:id", authenticateUser, asyncHandler(async(req, res) => {
     const set = await SetsReps.findByPk(req.params.id);
     const exercise = await Exercise.findByPk(req.params.exerciseId);
     try{
@@ -141,7 +141,7 @@ router.put("workout/:workoutId/exercise/:exerciseId/set/:id", authenticateUser, 
 }));
 
 //Delete route to destroy a specific set
-router.delete("/workout/:workoutId/exercise/:exerciseId/set/:id", authenticateUser, async(req, res)=>{
+router.delete("/workouts/:workoutId/exercises/:exerciseId/sets/:id", authenticateUser, async(req, res)=>{
     try{
         const exercise = await Exercise.findByPk(req.params.exerciseId);
         const set = await SetsReps.findByPk(req.params.id);
@@ -158,4 +158,4 @@ router.delete("/workout/:workoutId/exercise/:exerciseId/set/:id", authenticateUs
     } 
 });
 
-export default router;
+module.exports = router;
