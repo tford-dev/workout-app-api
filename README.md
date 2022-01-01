@@ -21,4 +21,9 @@ POST /workouts/:workoutId/exercises = Creates a new exercise
 PUT workouts/:workoutId/exercises/:id = Updates an exercise if it's workoutId matches :workoutId
 DELETE /workouts/:workoutId/exercises/:id = Deletes a specific exercise
  
-
+SETS ROUTES 
+GET /workouts/:workoutId/exercises/:exerciseId/sets = Displays sets and reps data if exerciseId matches :exerciseId in path
+GET workouts/:workoutId/exercises/:exerciseId/sets/:id = Displays specific sets/reps, mainly for editing sets and reps
+POST /workouts/:workoutId/exercises/:exerciseId/sets = Creates sets/reps for the corresponding exerciseId in path
+PUT workouts/:workoutId/exercises/:exerciseId/sets/:id = Edits specific sets/reps
+DELETE workouts/:workoutId/exercises/:exerciseId/sets/:id = Delete specific sets/reps within exercise

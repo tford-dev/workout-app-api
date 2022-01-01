@@ -9,8 +9,7 @@ const userRouter = require("./routes/UserRoutes.js");
 const workoutRouter = require("./routes/WorkoutRoutes.js");
 const exerciseRouter = require("./routes/ExerciseRoutes.js");
 const setsRouter = require("./routes/SetsRepsRoutes.js");
-const sequelize = require("./models");
-console.log(sequelize);
+const {sequelize} = require("./models");
 
 // variable to enable global error logging
 const enableGlobalErrorLogging = process.env.ENABLE_GLOBAL_ERROR_LOGGING === 'true';
