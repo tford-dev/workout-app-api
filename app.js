@@ -4,7 +4,6 @@
 const cors = require("cors");
 const express = require('express');
 const morgan = require('morgan');
-//import routes from './routes';
 const userRouter = require("./routes/UserRoutes.js");
 const workoutRouter = require("./routes/WorkoutRoutes.js");
 const exerciseRouter = require("./routes/ExerciseRoutes.js");
@@ -32,11 +31,11 @@ app.get('/', (req, res) => {
   });
 });
 
-//app.use('/api', "./routes");
-app.use('/users', userRouter);
-app.use('/workouts', workoutRouter);
-app.use('/exercises', exerciseRouter);
-app.use('/sets', setsRouter);
+app.use('/api', userRouter, workoutRouter, exerciseRouter, setsRouter);
+// app.use('/users', userRouter);
+// app.use('/workouts', workoutRouter);
+// app.use('/exercises', exerciseRouter);
+// app.use('/sets', setsRouter);
 
 // send 404 if no other route matched
 app.use((req, res) => {

@@ -58,7 +58,7 @@ module.exports = (sequelize) => {
         User.hasMany(models.Workout, {
             as: 'workout-creator',
             foreignKey: {
-                fieldName: 'userId',
+                fieldName: "userId",
                 allowNull: false,
                 },
         });

@@ -24,9 +24,9 @@ router.get('/users', authenticateUser, asyncHandler(async (req, res) => {
 //POST route to create a new user
 router.post('/users', asyncHandler(async (req, res) => {
     try {
-        const salt =  await genSalt()
-        const hashedPassword = await hash(req.body.password, salt);
-
+        const salt =  await bcrypt.genSalt()
+        const hashedPassword = await bcrypt.hash(req.body.password, salt);
+        console.log(req.body)
         //swapped password for hashedPassword so user-password isn't saved as plain text in database
         if(
         ((req.body.firstName.length > 0) && (req.body.lastName.length > 0)) &&

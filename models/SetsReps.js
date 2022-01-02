@@ -10,11 +10,6 @@ module.exports = (sequelize) => {
             autoIncrement: true,
         },
 
-        setNumber: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
-        },
-
         repetitions: {
             type: DataTypes.INTEGER,
             allowNull: false,

@@ -22,13 +22,6 @@ router.get("/workouts", authenticateUser, asyncHandler(async(req, res) => {
             },
             //Descending order
             order: [['createdAt', 'DESC']],
-            include: [
-                {
-                    model: User,
-                    //User that created workout
-                    as: "workout-creator",
-                }
-            ]
         });
   
     //Loops through workout data and maps title, description, time, createdAt for UI
@@ -54,10 +47,14 @@ router.get("/workouts", authenticateUser, asyncHandler(async(req, res) => {
 
 //Route to create a new workout
 router.post("/workouts", authenticateUser, asyncHandler(async(req, res) => {
+    const user = req.currentUser;
     try{
         //Hard code for validation errors
         if(req.body.title.length > 0 && req.body.description.length > 0){
-            await Workout.create(req.body);
+            await Workout.create(
+                req.body,
+                req.body.userId = user.id
+            );
             //Sets location header to specific workout id
             res.location(`/workout/${Workout.id}`);
             res.status(201).end(console.log("New workout successfully created")).end();
@@ -84,14 +81,7 @@ router.get("/workouts/:id", authenticateUser, asyncHandler(async(req, res) => {
     const user = req.currentUser;
     try {
         //Find specific workout by Id
-        const workout = await Workout.findByPk(req.params.id, 
-            {include: [
-                {
-                    model: User,
-                    as: "workout-creator",
-                }
-            ]}
-    );
+        const workout = await Workout.findByPk(req.params.id);
         if(workout){
             if(user.id === workout.userId){
                 //Sends object to client
@@ -103,7 +93,9 @@ router.get("/workouts/:id", authenticateUser, asyncHandler(async(req, res) => {
                     userId: workout.userId,
                     createdAt: workout.createdAt,
             });
+            res.status(200).end();
             } else {
+                //Sends error if userId does not equal user.id
                 res.status(403).json({message: "Access Denied"}).end();
             }
         }
@@ -119,7 +111,7 @@ router.put("/workouts/:id", authenticateUser, asyncHandler(async(req, res) => {
     try{
         //If title and description are not blank
         if(req.body.title.length > 0 && req.body.description.length > 0){
-            //Find workout by id from request
+            //Find workout by id from path
             const workout = await Workout.findByPk(req.params.id);
             console.log("Retrieved workout from put request");
             //Checks to see if current user possesses the workout
@@ -137,7 +129,7 @@ router.put("/workouts/:id", authenticateUser, asyncHandler(async(req, res) => {
             }
         //Hard code for validation errors
         } else if(req.body.title.length === 0 && req.body.description.length === 0){
-            res.status(400).json({errors: "You must enter a value for title and description."})
+            res.status(400).json({errors: "You must enter a value for title and description."}).end()
         } else if (req.body.title.length === 0) {
             res.status(400).json({errors: "You must enter a value for title."}).end();
         } else if (req.body.description.length === 0) {
@@ -170,32 +162,38 @@ router.delete("/workouts/:id", authenticateUser, async(req, res)=>{
         }); 
         //Conditional only works if user id is equal to workout userId
         if(user.id === workout.userId){
-            //Loops through exercise children of workout
-            await exercises.forEach(exercise => {
-                //If exercise child's workoutId === workout.id
-                if(exercise.workoutId === workout.id){
-                    //Finds all setsReps within exercise child
-                    const sets = SetsReps.findAll({
-                        //Where parent's id equals child's exerciseId
-                        where: {
-                            exerciseId: exercise.id
-                        },
-                        order: [['createdAt', 'DESC']],
-                    });
-                    //Loops through children of exercise
-                    sets.forEach(set => {
-                        //Conditional for if set's exerciseId equals parent's id in loop
-                        if(set.exerciseId === exercise.id){
-                            //Deletes set first
-                            set.destroy();
+            //If an exercises exists
+            if(exercises.length){
+                //Loops through exercise children of workout
+                await exercises.forEach(exercise => {
+                    //If exercise child's workoutId === workout.id
+                    if(exercise.workoutId === workout.id){
+                        //Finds all setsReps within exercise child
+                        const sets = SetsReps.findAll({
+                            //Where parent's id equals child's exerciseId
+                            where: {
+                                exerciseId: exercise.id
+                            },
+                            order: [['createdAt', 'DESC']],
+                        });
+                        //If there are sets
+                        if(sets.length){
+                            //Loops through sets
+                            sets.forEach(set => {
+                                //Conditional for if set's exerciseId equals parent's id in loop
+                                if(set.exerciseId === exercise.id){
+                                    //Deletes set first
+                                    set.destroy();
+                                }
+                            })
                         }
-                    })
-                    //Deletes exercise second
-                    exercise.destroy();
-                }
-                //Deletes workout last
-                workout.destroy();
-            })
+                        //Deletes exercise second
+                        exercise.destroy();
+                    }
+                })
+            }
+            //Deletes last
+            workout.destroy();
             console.log("Workout Successfully Deleted");
             res.status(204).end();
         } else {

@@ -17,11 +17,11 @@
     "express": "^4.17.1",
     "http-errors": "~1.6.3",
     "morgan": "^1.10.0",
+    "nodemon": "^2.0.15",
     "promise.prototype.finally": "^3.1.2",
     "sequelize": "^6.6.5",
     "sqlite3": "^4.2.0"
   },
-  "type": "commonjs",
   "devDependencies": {
     "sequelize-cli": "^6.3.0"
   }
