@@ -51,16 +51,18 @@ router.get("/workouts/:workoutId/exercises", authenticateUser, asyncHandler(asyn
 //POST route to create a new exercise
 router.post("/workouts/:workoutId/exercises", authenticateUser, asyncHandler(async(req, res) => {
     try{
-        //Title is the parameter that CAN'T be null
+        //Title CAN'T be null
         if(req.body.title.length > 0){
             await Exercise.create(
                 req.body,
                 req.body.workoutId = parseInt(req.params.workoutId)
             );
-            res.status(201).end(console.log("New exercise successfully created!")).end();
+            res.status(201)
+                .json({message: "New exercise successfully created!"})
+                .end(console.log("New exercise successfully created!"));
         //Title for exercise cannot be null
         } else if(req.body.title.length === 0){
-            res.status(400).json({errors: "You must enter a value for title."})
+            res.status(400).json({errors: "You must enter a value for title."});
         }
     } catch(error){
         if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
@@ -94,6 +96,8 @@ router.get("/workouts/:workoutId/exercises/:id", authenticateUser, asyncHandler(
             } else {
                 res.status(403).json({message: "Access Denied"}).end();
             }
+        } else {
+            res.status(404).json({message: "Exercise not found."}).end();
         }
     } catch(error){
         throw error;
@@ -135,31 +139,30 @@ router.delete("/workouts/:workoutId/exercises/:id", authenticateUser, async(req,
     try{
         //Finds exercise based off of :id in path
         const exercise = await Exercise.findByPk(req.params.id);
+        //Finds all sets that are a child of the parent
+        const sets = await SetsReps.findAll({
+            //Where parent's id equals child's exerciseId
+            where: {
+                exerciseId: exercise.id
+            },
+            order: [['createdAt', 'DESC']],
+        });
         //Checks to see if exercise is a child of workout
         if(parseInt(req.params.workoutId) === exercise.workoutId){
-            //Finds all sets that are a child of the parent
-            const sets = await SetsReps.findAll({
-                //Where parent's id equals child's exerciseId
-                where: {
-                    exerciseId: exercise.id
-                },
-                order: [['createdAt', 'DESC']],
-            });
             //If sets array has data
             if(sets.length){
                 //Loops through children of exercise
-                await sets.forEach(set => {
-                    //Conditional for if set's exerciseId equals parent's id in loop
-                    if(set.exerciseId === exercise.id){
-                        //Deletes set first
-                        set.destroy();
-                    }
+                await sets.forEach(async(set) => {
+                    //Deletes set first
+                    await set.destroy();
                 })
+                console.log(`Sets of ${exercise.title} successfully deleted.`)
             }
             //Deletes exercise last
             await exercise.destroy();
-            console.log("Exercise Successfully Deleted");
-            res.status(204).end();
+            res.status(204)
+                .json({message: "Exercise Successfully Deleted"})
+                .end(console.log("Exercise Successfully Deleted"));
         } else {
             res.status(403).json({message: "Access Denied"}).end();
         }
