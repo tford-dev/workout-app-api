@@ -34,6 +34,7 @@ module.exports = (sequelize) => {
             foreignKey: {
                 fieldName: "userId",
                 allowNull: false,
+                onDelete: 'cascade'
             },
         });
     };

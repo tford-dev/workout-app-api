@@ -23,6 +23,7 @@ module.exports = (sequelize) => {
             foreignKey: {
                 fieldName: "exerciseId",
                 allowNull: false,
+                onDelete: 'cascade'
             }
         })
     }

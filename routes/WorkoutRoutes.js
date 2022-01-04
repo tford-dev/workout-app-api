@@ -147,58 +147,74 @@ router.put("/workouts/:id", authenticateUser, asyncHandler(async(req, res) => {
 
 //Delete route to destroy a specific workout and it's children
 router.delete("/workouts/:id", authenticateUser, async(req, res)=>{
-    //Current authenticated user
-    const user = req.currentUser;
     try{
+        //Current authenticated user
+        const user = req.currentUser;
         //Finds current workout based off of :id in path
         const workout = await Workout.findByPk(req.params.id);
         //Find all Exercise-model children of workout
-        const exercises = Exercise.findAll({
+        const exercises = await Exercise.findAll({
             //Where exercise workoutId === workout.id
             where: {
                 workoutId: workout.id
             },
             order: [['createdAt', 'DESC']],
         }); 
-        //Conditional only works if user id is equal to workout userId
-        if(user.id === workout.userId){
-            //If an exercises exists
-            if(exercises.length){
-                //Loops through exercise children of workout
-                await exercises.forEach(exercise => {
-                    //If exercise child's workoutId === workout.id
-                    if(exercise.workoutId === workout.id){
+        //anon function for deleting sets
+        const deleteSets = async()=>{
+            //Conditional only works if user id is equal to workout userId
+            if (user.id === workout.userId){
+                //If an exercises exists
+                if(exercises.length){
+                    //Loops through exercise children of workout
+                    await exercises.forEach(async(exercise) => {
                         //Finds all setsReps within exercise child
-                        const sets = SetsReps.findAll({
+                        const sets = await SetsReps.findAll({
                             //Where parent's id equals child's exerciseId
                             where: {
                                 exerciseId: exercise.id
                             },
                             order: [['createdAt', 'DESC']],
-                        });
+                        })
                         //If there are sets
                         if(sets.length){
                             //Loops through sets
-                            sets.forEach(set => {
-                                //Conditional for if set's exerciseId equals parent's id in loop
-                                if(set.exerciseId === exercise.id){
-                                    //Deletes set first
-                                    set.destroy();
-                                }
+                            await sets.forEach(async(set) => {
+                                //Deletes set first
+                                await set.destroy();
                             })
+                            console.log(`Sets of ${workout.id} deleted`)
                         }
-                        //Deletes exercise second
-                        exercise.destroy();
-                    }
-                })
+                    });
+                }
+            }  else {
+                res.status(403).json({message: "Access Denied"});
             }
+        };
+
+        const deleteExercises = async()=> {
+            if(exercises.length){
+                await exercises.forEach(async(exercise) => {
+                    await exercise.destroy();
+                })
+                console.log(`Exercises of ${workout.id} deleted`);
+
+            }
+        };
+
+        const deleteWorkouts = async()=>{
             //Deletes last
-            workout.destroy();
-            console.log("Workout Successfully Deleted");
-            res.status(204).end();
-        } else {
-            res.status(403).json({message: "Access Denied"}).end();
+            await workout.destroy();
+            res.status(204)
+                .json({message : `Workout #${workout.id} Successfully Deleted`})
+                .end(console.log(`Workout #${workout.id} Successfully Deleted`));
+        };
+
+        const deleteCall = async() => {
+            await deleteWorkouts()
         }
+        
+        deleteCall();
     } catch(error){
         throw(error)
     } 

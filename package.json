@@ -8,6 +8,7 @@
     "seed": "cross-env DB_ENABLE_LOGGING=true node './seed'"
   },
   "dependencies": {
+    "axios": "^0.24.0",
     "bcrypt": "^5.0.1",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "~1.4.4",
