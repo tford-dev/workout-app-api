@@ -140,24 +140,29 @@ router.delete("/workouts/:workoutId/exercises/:id", authenticateUser, async(req,
         //Finds exercise based off of :id in path
         const exercise = await Exercise.findByPk(req.params.id);
         //Finds all sets that are a child of the parent
-        const sets = await SetsReps.findAll({
-            //Where parent's id equals child's exerciseId
-            where: {
-                exerciseId: exercise.id
-            },
-            order: [['createdAt', 'DESC']],
-        });
+        // const sets = await SetsReps.findAll({
+        //     //Where parent's id equals child's exerciseId
+        //     where: {
+        //         exerciseId: exercise.id
+        //     },
+        //     order: [['createdAt', 'DESC']],
+        // });
         //Checks to see if exercise is a child of workout
         if(parseInt(req.params.workoutId) === exercise.workoutId){
             //If sets array has data
-            if(sets.length){
-                //Loops through children of exercise
-                await sets.forEach(async(set) => {
-                    //Deletes set first
-                    await set.destroy();
-                })
-                console.log(`Sets of ${exercise.title} successfully deleted.`)
-            }
+            // if(sets.length){
+            //     //Loops through children of exercise
+            //     await sets.forEach(async(set) => {
+            //         //Deletes set first
+            //         await set.destroy();
+            //     })
+            //     console.log(`Sets of ${exercise.title} successfully deleted.`)
+            // }
+            SetsReps.destroy({
+                where: {
+                    exerciseId: exercise.id
+                }
+            })
             //Deletes exercise last
             await exercise.destroy();
             res.status(204)

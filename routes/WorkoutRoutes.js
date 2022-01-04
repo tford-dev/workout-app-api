@@ -51,6 +51,7 @@ router.post("/workouts", authenticateUser, asyncHandler(async(req, res) => {
     try{
         //Hard code for validation errors
         if(req.body.title.length > 0 && req.body.description.length > 0){
+            //If there is a title and description, Workout created
             await Workout.create(
                 req.body,
                 req.body.userId = user.id
@@ -59,7 +60,7 @@ router.post("/workouts", authenticateUser, asyncHandler(async(req, res) => {
             res.location(`/workout/${Workout.id}`);
             res.status(201).end(console.log("New workout successfully created")).end();
         } else if(req.body.title.length === 0 && req.body.description.length === 0){
-            res.status(400).json({errors: "You must enter a value for title and description."})
+            res.status(400).json({errors: "You must enter a value for title and description."}).end();
         } else if (req.body.title.length === 0) {
             res.status(400).json({errors: "You must enter a value for title."}).end();
         } else if (req.body.description.length === 0) {
@@ -160,7 +161,7 @@ router.delete("/workouts/:id", authenticateUser, async(req, res)=>{
             },
             order: [['createdAt', 'DESC']],
         }); 
-        //anon function for deleting sets
+        //Function to delete sets(the last child of Workout model)
         const deleteSets = async()=>{
             //Conditional only works if user id is equal to workout userId
             if (user.id === workout.userId){
@@ -168,42 +169,31 @@ router.delete("/workouts/:id", authenticateUser, async(req, res)=>{
                 if(exercises.length){
                     //Loops through exercise children of workout
                     await exercises.forEach(async(exercise) => {
-                        //Finds all setsReps within exercise child
-                        const sets = await SetsReps.findAll({
-                            //Where parent's id equals child's exerciseId
+                        //Finds Sets and deletes them
+                        SetsReps.destroy({
                             where: {
-                                exerciseId: exercise.id
-                            },
-                            order: [['createdAt', 'DESC']],
+                                exerciseId : exercise.id
+                            }
                         })
-                        //If there are sets
-                        if(sets.length){
-                            //Loops through sets
-                            await sets.forEach(async(set) => {
-                                //Deletes set first
-                                await set.destroy();
-                            })
-                            console.log(`Sets of ${workout.id} deleted`)
-                        }
                     });
                 }
             }  else {
                 res.status(403).json({message: "Access Denied"});
             }
         };
-
+        
+        //Function to delete exercises of Workout Model
         const deleteExercises = async()=> {
-            if(exercises.length){
-                await exercises.forEach(async(exercise) => {
-                    await exercise.destroy();
-                })
-                console.log(`Exercises of ${workout.id} deleted`);
-
-            }
+            //Finds exercises and deletes them
+            Exercise.destroy({
+                where: {
+                    workoutId: workout.id
+                }
+            })
         };
 
+        //Function to delete Workout Model
         const deleteWorkouts = async()=>{
-            //Deletes last
             await workout.destroy();
             res.status(204)
                 .json({message : `Workout #${workout.id} Successfully Deleted`})
@@ -211,9 +201,11 @@ router.delete("/workouts/:id", authenticateUser, async(req, res)=>{
         };
 
         const deleteCall = async() => {
-            await deleteWorkouts()
+            //Tables deleted in this order to avoid constraint errors
+            await deleteSets();
+            await deleteExercises();
+            await deleteWorkouts();
         }
-        
         deleteCall();
     } catch(error){
         throw(error)
