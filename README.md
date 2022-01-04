@@ -26,7 +26,7 @@ POST api/workouts = Creates a new workout
     "time": "INSERT DATE HERE"
 }
 PUT api/workouts/:id = Updates title and/or description of a workout
-DELETE api/workouts/:id = Deletes specific workout
+DELETE api/workouts/:id = Deletes specific workout and it's children
 
 EXERCISE ROUTES
 GET api/workouts/:workoutId/exercises = Displays exercise data if exercises workoutId matches :workoutId in path
@@ -37,7 +37,7 @@ POST api/workouts/:workoutId/exercises = Creates a new exercise
     "title": "pull-ups"
 }
 PUT api/workouts/:workoutId/exercises/:id = Updates an exercise if it's workoutId matches :workoutId
-DELETE api/workouts/:workoutId/exercises/:id = Deletes a specific exercise
+DELETE api/workouts/:workoutId/exercises/:id = Deletes a specific exercise and it's children
  
 SETS ROUTES 
 GET api/workouts/:workoutId/exercises/:exerciseId/sets = Displays sets and reps data if exerciseId matches :exerciseId in path
