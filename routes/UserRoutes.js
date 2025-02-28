@@ -2,9 +2,11 @@
 
 const express = require("express");
 const { asyncHandler } = require("../middleware/asyncHandler.js");
-const { User } = require("../models");
+const db = require("../models");  // Ensure models are properly loaded
+const User = db.User;
 const { authenticateUser } = require("../middleware/authUser");
 const bcrypt = require("bcrypt");
+
 const router = express.Router();
 
 // GET route for user authentication
