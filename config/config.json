@@ -8,7 +8,7 @@
     "storage": "workout_app.db"
   },
   "production": {
-    "dialect": "sqlite",
-    "storage": "workout_app.db"
+    "dialect": "postgres",
+    "storage": "DATABASE_URL"
   }
 }
